@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/hnsia/eternalstore-dfs/p2p"
+)
 
 func main() {
-	fmt.Println("test")
+	tr := p2p.NewTCPTransport(":3000")
+
+	if err := tr.ListenAndAccept(); err != nil {
+		log.Fatal(err)
+	}
+
+	select {}
 }
