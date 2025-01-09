@@ -7,8 +7,10 @@ import (
 	"github.com/hnsia/eternalstore-dfs/p2p"
 )
 
-func OnPeer(p2p.Peer) error {
-	return fmt.Errorf("failed onpeer func")
+func OnPeer(peer p2p.Peer) error {
+	// return fmt.Errorf("failed onpeer func")
+	peer.Close()
+	return nil
 }
 
 func main() {
