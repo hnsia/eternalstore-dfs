@@ -1,6 +1,10 @@
 package main
 
-import "github.com/hnsia/eternalstore-dfs/p2p"
+import (
+	"fmt"
+
+	"github.com/hnsia/eternalstore-dfs/p2p"
+)
 
 type FileServerOpts struct {
 	StorageRoot       string
@@ -11,7 +15,8 @@ type FileServerOpts struct {
 type FileServer struct {
 	FileServerOpts
 
-	store *Store
+	store  *Store
+	quitch chan struct{}
 }
 
 func NewFileServer(opts FileServerOpts) *FileServer {
@@ -23,6 +28,22 @@ func NewFileServer(opts FileServerOpts) *FileServer {
 	return &FileServer{
 		FileServerOpts: opts,
 		store:          NewStore(storeOpts),
+		quitch:         make(chan struct{}),
+	}
+}
+
+func (s *FileServer) Stop() {
+	close(s.quitch)
+}
+
+func (s *FileServer) loop() {
+	for {
+		select {
+		case msg := <-s.Transport.Consume():
+			fmt.Println(msg)
+		case <-s.quitch:
+			return
+		}
 	}
 }
 
@@ -30,6 +51,8 @@ func (s *FileServer) Start() error {
 	if err := s.Transport.ListenAndAccept(); err != nil {
 		return err
 	}
+
+	s.loop()
 
 	return nil
 }

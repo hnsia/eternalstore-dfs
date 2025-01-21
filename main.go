@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/hnsia/eternalstore-dfs/p2p"
 )
@@ -29,6 +30,11 @@ func main() {
 
 	s := NewFileServer(fileServerOpts)
 
+	go func() {
+		time.Sleep(time.Second * 3)
+		s.Stop()
+	}()
+
 	if err := s.Start(); err != nil {
 		log.Fatal(err)
 	}
@@ -52,5 +58,5 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	select {}
+	// select {}
 }
