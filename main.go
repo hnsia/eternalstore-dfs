@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/hnsia/eternalstore-dfs/p2p"
 )
@@ -13,9 +12,9 @@ func OnPeer(peer p2p.Peer) error {
 	return nil
 }
 
-func main() {
+func makeServer(listenAddr string, nodes ...string) *FileServer {
 	tcpTransportOpts := p2p.TCPTransportOpts{
-		ListenAddr:    ":3000",
+		ListenAddr:    listenAddr,
 		HandshakeFunc: p2p.NoopHandshakeFunc,
 		Decoder:       p2p.DefaultDecoder{},
 		// TODO: onPeer func
@@ -23,41 +22,22 @@ func main() {
 	tcpTransport := p2p.NewTCPTransport(tcpTransportOpts)
 
 	fileServerOpts := FileServerOpts{
-		StorageRoot:       "3000_network",
+		StorageRoot:       listenAddr + "_network",
 		PathTransformFunc: CASPathTransformFunc,
 		Transport:         tcpTransport,
-		BootstrapNodes:    []string{":4000"},
+		BootstrapNodes:    nodes,
 	}
 
-	s := NewFileServer(fileServerOpts)
+	return NewFileServer(fileServerOpts)
+}
+
+func main() {
+	s1 := makeServer(":3000", "")
+	s2 := makeServer(":4000", ":3000")
 
 	go func() {
-		time.Sleep(time.Second * 3)
-		s.Stop()
+		log.Fatal(s1.Start())
 	}()
 
-	if err := s.Start(); err != nil {
-		log.Fatal(err)
-	}
-
-	// tcpOpts := p2p.TCPTransportOpts{
-	// 	ListenAddr:    ":3000",
-	// 	HandshakeFunc: p2p.NoopHandshakeFunc,
-	// 	Decoder:       p2p.DefaultDecoder{},
-	// 	OnPeer:        OnPeer,
-	// }
-	// tr := p2p.NewTCPTransport(tcpOpts)
-
-	// go func() {
-	// 	for {
-	// 		msg := <-tr.Consume()
-	// 		fmt.Printf("%+v\n", msg)
-	// 	}
-	// }()
-
-	// if err := tr.ListenAndAccept(); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// select {}
+	s2.Start()
 }
