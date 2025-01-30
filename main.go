@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 
 	"github.com/hnsia/eternalstore-dfs/p2p"
@@ -44,4 +45,8 @@ func main() {
 	}()
 
 	s2.Start()
+
+	data := bytes.NewReader([]byte("my big data file here!"))
+
+	s2.StoreData("key", data)
 }
