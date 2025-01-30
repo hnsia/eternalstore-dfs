@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"io"
 	"log"
@@ -46,7 +47,13 @@ type Payload struct {
 }
 
 func (s *FileServer) broadcast(p Payload) error {
-	return nil
+	peers := []io.Writer{}
+	for _, peer := range s.peers {
+		peers = append(peers, peer)
+	}
+
+	mw := io.MultiWriter(peers...)
+	return gob.NewEncoder(mw).Encode(p)
 }
 
 func (s *FileServer) StoreData(key string, r io.Reader) error {
