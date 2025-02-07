@@ -57,13 +57,19 @@ type Message struct {
 	Payload any
 }
 
+type MessageStoreFile struct {
+	Key string
+}
+
 func (s *FileServer) StoreData(key string, r io.Reader) error {
 	// 1. Store this file to disk
 	// 2. broadcast this file to all known peers in the network
 
 	buf := new(bytes.Buffer)
 	msg := Message{
-		Payload: []byte("storagekey"),
+		Payload: MessageStoreFile{
+			Key: key,
+		},
 	}
 	if err := gob.NewEncoder(buf).Encode(msg); err != nil {
 		return err
@@ -133,7 +139,7 @@ func (s *FileServer) loop() {
 				log.Println(err)
 			}
 
-			fmt.Printf("recv: %s\n", string(msg.Payload.([]byte)))
+			fmt.Printf("payload: %+v\n", msg.Payload)
 
 			peer, ok := s.peers[rpc.From]
 			if !ok {
@@ -195,4 +201,8 @@ func (s *FileServer) Start() error {
 	s.loop()
 
 	return nil
+}
+
+func init() {
+	gob.Register(MessageStoreFile{})
 }
