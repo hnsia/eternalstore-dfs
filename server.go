@@ -77,12 +77,28 @@ type MessageStoreFile struct {
 	Size int64
 }
 
+type MessageGetFile struct {
+	Key string
+}
+
 func (s *FileServer) Get(key string) (io.Reader, error) {
 	if s.store.Has(key) {
 		return s.store.Read(key)
 	}
 
-	panic("dont have file locally")
+	fmt.Printf("dont have file (%s) locally, fetching from network...\n", key)
+
+	msg := Message{
+		Payload: MessageGetFile{
+			Key: key,
+		},
+	}
+
+	if err := s.broadcast(&msg); err != nil {
+		return nil, err
+	}
+
+	select {}
 
 	return nil, nil
 }
@@ -207,8 +223,15 @@ func (s *FileServer) handleMessage(from string, msg *Message) error {
 	switch v := msg.Payload.(type) {
 	case MessageStoreFile:
 		return s.handleMessageStoreFile(from, v)
+	case MessageGetFile:
+		return s.handleMessageGetFile(from, v)
 	}
 
+	return nil
+}
+
+func (s *FileServer) handleMessageGetFile(from string, msg MessageGetFile) error {
+	fmt.Println("need to get a file from disk and send it over the wire")
 	return nil
 }
 
@@ -261,4 +284,5 @@ func (s *FileServer) Start() error {
 
 func init() {
 	gob.Register(MessageStoreFile{})
+	gob.Register(MessageGetFile{})
 }
