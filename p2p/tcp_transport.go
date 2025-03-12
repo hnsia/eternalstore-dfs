@@ -48,13 +48,15 @@ type TCPTransport struct {
 func NewTCPTransport(opts TCPTransportOpts) *TCPTransport {
 	return &TCPTransport{
 		TCPTransportOpts: opts,
-		rpcch:            make(chan RPC),
+		rpcch:            make(chan RPC, 1024),
 	}
 }
 
-// func (t *TCPTransport) ListenAddr() string {
-// 	return t.
-// }
+// Addr implements the Transport interface. Returns the address
+// the transport is accepting connections from.
+func (t *TCPTransport) Addr() string {
+	return t.ListenAddr
+}
 
 // Consume implements the Transport interface, which will return a read-only channel
 // for reading the incoming messages received from another peer in the network.
@@ -129,8 +131,8 @@ func (t *TCPTransport) handleConn(conn net.Conn, outbound bool) {
 	}
 
 	// Read Loop
-	rpc := RPC{}
 	for {
+		rpc := RPC{}
 		err = t.Decoder.Decode(conn, &rpc)
 		if errors.Is(err, net.ErrClosed) {
 			return
