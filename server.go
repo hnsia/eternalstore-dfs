@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -103,7 +104,11 @@ func (s *FileServer) Get(key string) (io.Reader, error) {
 	time.Sleep(time.Millisecond * 500)
 
 	for _, peer := range s.peers {
-		n, err := s.store.Write(key, io.LimitReader(peer, 22))
+		// First read the file size so we can limit the amount of bytes that we read from the connection,
+		// so it will not keep hanging.
+		var fileSize int64
+		binary.Read(peer, binary.LittleEndian, &fileSize)
+		n, err := s.store.Write(key, io.LimitReader(peer, fileSize))
 		if err != nil {
 			return nil, err
 		}
@@ -260,7 +265,10 @@ func (s *FileServer) handleMessageGetFile(from string, msg MessageGetFile) error
 		return fmt.Errorf("peer %s not in map", from)
 	}
 
+	// First send the "incomingStream" byte to the peer and then we can send the file size as an int64.
 	peer.Send([]byte{p2p.IncomingStream})
+	var fileSize int64 = 22
+	binary.Write(peer, binary.LittleEndian, fileSize)
 	n, err := io.Copy(peer, r)
 	if err != nil {
 		return err
