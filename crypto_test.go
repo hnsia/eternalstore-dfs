@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 )
 
-func TestCopyEncrypt(t *testing.T) {
-	src := bytes.NewReader([]byte("Foo not Bar"))
+func TestCopyEncryptDecrypt(t *testing.T) {
+	payload := "Foo not Bar"
+	src := bytes.NewReader([]byte(payload))
 	dst := new(bytes.Buffer)
 	key := newEncryptionKey()
 	_, err := copyEncrypt(key, src, dst)
@@ -15,5 +15,16 @@ func TestCopyEncrypt(t *testing.T) {
 		t.Error(err)
 	}
 
-	fmt.Println(dst.Bytes())
+	// fmt.Println(dst.String())
+
+	out := new(bytes.Buffer)
+	if _, err := copyDecrypt(key, dst, out); err != nil {
+		t.Error(err)
+	}
+
+	if out.String() != payload {
+		t.Errorf("decryption failed!!!")
+	}
+
+	// fmt.Println(out.String())
 }
