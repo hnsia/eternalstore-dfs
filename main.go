@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -51,10 +52,15 @@ func main() {
 	go s2.Start()
 	time.Sleep(2 * time.Second)
 
-	// data := bytes.NewReader([]byte("my big data file here!"))
-	// s2.Store("coolPicture.jpg", data)
+	key := "coolPicture.jpg"
+	data := bytes.NewReader([]byte("my big data file here!"))
+	s2.Store(key, data)
 
-	r, err := s2.Get("coolPicture.jpg")
+	if err := s2.store.Delete(key); err != nil {
+		log.Fatal(err)
+	}
+
+	r, err := s2.Get(key)
 	// r, err := s2.Get("anewkeywedonthave")
 	if err != nil {
 		log.Fatal(err)
